@@ -15,6 +15,10 @@ class CGRI
 
 		void calculateHSV(Mat& hsvImage);
 		void SaveImg(String filename, Mat& img);
+		void ShowImg(Mat& img, String name, int x, int y);
+		Mat segmentation(Mat src);
+		Mat MorphologicalOperation(Mat src, int kernel_size, int cycle_num_e, int cycle_num_d);
+		Mat EightConnectivity(Mat& img, float cof);
 
 	private:
 

@@ -18,25 +18,25 @@ int main()
 	CGRI myCGRI;
 	//myCGRI.calculateHSV(hsvImage);
 
-	// 定义白色的阈值范围
-	Scalar lower_white(0, 0, 200);
-	Scalar upper_white(180, 60, 255);
-	// 根据阈值构建掩模
-	Mat mask;
-	inRange(hsvImage, lower_white, upper_white, mask);
+	Mat mask = myCGRI.segmentation(hsvImage);
 
-	myCGRI.SaveImg(filename, mask);
+	//filtering
+	Mat temp = mask.clone();
+	//GaussianBlur(temp, temp, Size(5, 5), 0, 0);
+	medianBlur(temp, temp, 7);
 
-	namedWindow("mask", WINDOW_NORMAL);
-	moveWindow("mask", 0, 0);
-	imshow("mask", mask);
+	Mat morph = myCGRI.MorphologicalOperation(temp, 3, 8, 8);
+
+	Mat connect = myCGRI.EightConnectivity(morph, 0.5);
+
+
+	//myCGRI.SaveImg(filename, mask);
+	myCGRI.ShowImg(mask, "mask", 0, 0);
+	myCGRI.ShowImg(temp, "filter", 100, 100);
+	myCGRI.ShowImg(morph, "morph", 200, 200);
+	myCGRI.ShowImg(connect, "connect", 300, 300);
 
 	waitKey(0);
-
-	// 对原图和掩模进行位运算
-	/*Mat res;
-	bitwise_and(inputImage, inputImage, res, mask);*/
-
 
 	return 0;
 }
