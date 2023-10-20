@@ -20,7 +20,7 @@ int main()
 
 	// 定义白色的阈值范围
 	Scalar lower_white(0, 0, 200);
-	Scalar upper_white(180, 30, 255);
+	Scalar upper_white(180, 60, 255);
 	// 根据阈值构建掩模
 	Mat mask;
 	inRange(hsvImage, lower_white, upper_white, mask);

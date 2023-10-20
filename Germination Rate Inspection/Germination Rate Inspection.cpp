@@ -61,7 +61,7 @@ void CGRI::SaveImg(String filename, Mat& img)
 	std::string filename_without_extension = basename.substr(0, basename.find_last_of("."));
 
 	// Construct the file name and path for saving
-	std::string outfilename = "E:\\·¢Ñ¿ÂÊ¼ì²âÍ¼Ïñ\\" + filename_without_extension + "S0-30" + ".jpg";
+	std::string outfilename = "E:\\·¢Ñ¿ÂÊ¼ì²âÍ¼Ïñ\\" + filename_without_extension + "S0-60_v200-250" + ".jpg";
 	
 
 	// Save image
