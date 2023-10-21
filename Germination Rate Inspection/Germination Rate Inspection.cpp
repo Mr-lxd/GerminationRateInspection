@@ -75,33 +75,51 @@ void CGRI::ShowImg(Mat& img, String name, int x, int y)
 	imshow(name, img);
 }
 
-Mat CGRI::segmentation(Mat src)
+Mat CGRI::segmentation(Mat src, int label)
 {
-	// 定义白色的阈值范围
-	Scalar lower_white(0, 0, 200);
-	Scalar upper_white(180, 60, 255);
-	// 根据阈值构建掩模
 	Mat mask;
-	inRange(src, lower_white, upper_white, mask);
+	if (label == 0)
+	{
+		// 定义白色的阈值范围
+		Scalar lower_white(0, 0, 200);
+		Scalar upper_white(180, 60, 255);
+		// 根据阈值构建掩模
+		inRange(src, lower_white, upper_white, mask);
+	}
+	if (label == 1)
+	{
+		// 定义黄色的阈值范围
+		Scalar lower_yellow(15, 100, 100);
+		Scalar upper_yellow(30, 255, 255);
+		// 根据阈值构建掩模
+		inRange(src, lower_yellow, upper_yellow, mask);
+	}
+	
 
 	return mask;
 }
 
-Mat CGRI::MorphologicalOperation(Mat src, int kernel_size, int cycle_num_e, int cycle_num_d)
+Mat CGRI::MorphologicalOperation(Mat& src, int kernel_size, int cycle_num_e, int cycle_num_d, int label)
 {
 	Mat kernel;
 
 	kernel = getStructuringElement(MORPH_RECT, Size(kernel_size, kernel_size));
 
 	src = src.clone();
-	//erode(src, src, kernel, Point(-1, -1), cycle_num_e);
-	dilate(src, src, kernel, Point(-1, -1), cycle_num_d);
-	erode(src, src, kernel, Point(-1, -1), cycle_num_e);
+
+	if (label == 0) {//opening
+		erode(src, src, kernel, Point(-1, -1), cycle_num_e);
+		dilate(src, src, kernel, Point(-1, -1), cycle_num_d);
+	}
+	if (label == 1) {
+		dilate(src, src, kernel, Point(-1, -1), cycle_num_d);
+		erode(src, src, kernel, Point(-1, -1), cycle_num_e);
+	}
 
 	return src;
 }
 
-Mat CGRI::EightConnectivity(Mat& img, float cof)
+pair<Mat, int> CGRI::EightConnectivity(Mat& img, float cof)
 {
 	img = img.clone();
 	Mat labels; // Output labeled image
@@ -118,6 +136,7 @@ Mat CGRI::EightConnectivity(Mat& img, float cof)
 	}
 	mean_area = sum_area / (num_labels - 1); // Calculate mean area, excluding background
 
+	vector<bool> valid_labels(num_labels, false); // Initialize all labels as invalid
 	Mat output = Mat::zeros(labels.size(), CV_8UC1);
 	for (int i = 0; i < labels.rows; i++) {
 		for (int j = 0; j < labels.cols; j++) {
@@ -125,9 +144,93 @@ Mat CGRI::EightConnectivity(Mat& img, float cof)
 			// Check if area of the connected component containing the current pixel is greater than or equal to the mean area
 			if (label > 0 && stats.at<int>(label, CC_STAT_AREA) >= mean_area * cof) {
 				output.at<uchar>(i, j) = 255;
+				valid_labels[label] = true; // Mark the label as valid
 			}
 		}
 	}
 
-	return output;
+	int num_valid_labels = count(valid_labels.begin(), valid_labels.end(), true);
+	return { output, num_valid_labels };
+}
+
+Mat CGRI::OTSU(Mat& src)
+{
+	int thresh = 0, PerPixSum[256] = { 0 };
+	float PerPixDis[256] = { 0 }, NonZeroPixelRatio = 0.0f;
+
+	//Count the quantity of each grayscale value
+	for (int i = 0; i < src.rows; i++)
+	{
+		for (int j = 0; j < src.cols; j++)
+		{
+			PerPixSum[src.at<uchar>(i, j)]++;
+		}
+	}
+
+	//Calculate the proportion of pixels for each grayscale level compared to the total number of pixels in the image
+	for (int i = 0; i < 256; i++)
+	{
+		PerPixDis[i] = (float)PerPixSum[i] / (src.rows * src.cols);
+	}
+
+	//Iterate through all grayscale levels and calculate the threshold corresponding to the maximum between-class variance
+	float PixDis_1, PixSum_1, PixDis_2, PixSum_2, avg_1, avg_2, ICV_temp;
+	double ICV_max = 0.0;
+	for (int i = 0; i < 256; i++)
+	{
+		PixDis_1 = PixSum_1 = PixDis_2 = PixSum_2 = avg_1 = avg_2 = ICV_temp = 0;
+		//Compute the two segments resulting from threshold segmentation
+		for (int j = 0; j < 256; j++)
+		{
+			//first segment
+			if (j <= i)
+			{
+				PixDis_1 += PerPixDis[j];
+				PixSum_1 += j * PerPixDis[j];
+			}
+			//second segment
+			else
+			{
+				PixDis_2 += PerPixDis[j];
+				PixSum_2 += j * PerPixDis[j];
+			}
+		}
+		//The grayscale mean values of the two segments
+		avg_1 = PixSum_1 / PixDis_1;
+		avg_2 = PixSum_2 / PixDis_2;
+		ICV_temp = PixDis_1 * PixDis_2 * pow((avg_1 - avg_2), 2);
+		//Compare the thresholds
+		if (ICV_temp > ICV_max)
+		{
+			ICV_max = ICV_temp;
+			thresh = i;
+		}
+	}
+
+	//binary
+	Mat OtsuImg(src.size(), CV_8UC1, Scalar(0));
+	int nonZeroPixelCount = 0;
+	for (int i = 0; i < src.rows; i++)
+	{
+		for (int j = 0; j < src.cols; j++)
+		{
+			//Foreground
+			if (src.at<uchar>(i, j) > 0.8 * thresh)//Lower the threshold to prevent filtering out darker green tones.
+			{
+				OtsuImg.at<uchar>(i, j) = 255;
+				nonZeroPixelCount++;
+			}
+			//background
+			//else
+			//{
+			//	OtsuImg.at<uchar>(i, j) = 0;
+			//}
+		}
+	}
+
+	// NonZeroPixelRatio for MorphologicalOperation
+	int totalPixel = src.rows * src.cols;
+	NonZeroPixelRatio = (float)nonZeroPixelCount / totalPixel;
+
+	return OtsuImg;
 }
