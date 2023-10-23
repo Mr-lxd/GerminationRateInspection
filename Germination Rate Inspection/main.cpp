@@ -7,7 +7,7 @@ using namespace cv;
 
 int main()
 {
-	string filename = "C:\\Users\\赖信东\\Desktop\\1.jpg";
+	string filename = "C:\\Users\\赖信东\\Desktop\\2.jpg";
 	Mat inputImage = imread(filename);
 	//CGRI::imgCols = inputImage.cols;
 	//CGRI::imgRows = inputImage.rows;
@@ -24,7 +24,6 @@ int main()
 	//filtering
 	Mat temp_white = mask_white.clone();
 	Mat temp_yellow = mask_yellow.clone();
-	//GaussianBlur(temp, temp, Size(5, 5), 0, 0);
 	medianBlur(temp_white, temp_white, 7);
 
 	Mat morph_sprout = myCGRI.MorphologicalOperation(temp_white, 3, 8, 8, 1);
@@ -43,12 +42,12 @@ int main()
 	myCGRI.ShowImg(mask_white, "mask_white", 0, 0);
 	myCGRI.ShowImg(mask_yellow, "mask_yellow", 50, 50);
 	myCGRI.ShowImg(temp_white, "filter_white", 100, 100);
-	myCGRI.ShowImg(morph_sprout, "morph", 200, 200);
-	myCGRI.ShowImg(morph_seed, "morph_yellow", 250, 250);
-	myCGRI.ShowImg(connect_sprout, "connect", 300, 300);
+	myCGRI.ShowImg(morph_sprout, "morph_sprout", 200, 200);
+	myCGRI.ShowImg(morph_seed, "morph_seed", 250, 250);
+	myCGRI.ShowImg(connect_sprout, "connect_sprout", 300, 300);
 	myCGRI.ShowImg(connect_seed, "connect_seed", 350, 350);
 
-	cout << GR << std::endl;
+	cout << GR << endl;
 
 	waitKey(0);
 

@@ -17,7 +17,7 @@ class CGRI
 		void SaveImg(String filename, Mat& img);
 		void ShowImg(Mat& img, String name, int x, int y);
 		Mat segmentation(Mat src, int label);
-		Mat MorphologicalOperation(Mat& src, int kernel_size, int cycle_num_e, int cycle_num_d, int label);
+		Mat MorphologicalOperation(Mat src, int kernel_size, int cycle_num_e, int cycle_num_d, int label);
 		pair<Mat, int> EightConnectivity(Mat& img, float cof);
 		Mat OTSU(Mat& src);
 

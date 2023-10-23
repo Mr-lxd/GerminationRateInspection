@@ -99,7 +99,7 @@ Mat CGRI::segmentation(Mat src, int label)
 	return mask;
 }
 
-Mat CGRI::MorphologicalOperation(Mat& src, int kernel_size, int cycle_num_e, int cycle_num_d, int label)
+Mat CGRI::MorphologicalOperation(Mat src, int kernel_size, int cycle_num_e, int cycle_num_d, int label)
 {
 	Mat kernel;
 
